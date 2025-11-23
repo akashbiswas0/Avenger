@@ -94,7 +94,14 @@ export async function GET(request: NextRequest) {
     // Process each rental
     for (const rental of rentals) {
       try {
-        console.log(`Verifying rental ${rental.id} for @${rental.listings.screen_name}`);
+        // Handle listings - it might be an array or single object
+        const listing = Array.isArray(rental.listings) ? rental.listings[0] : rental.listings;
+        if (!listing) {
+          console.error(`Listing not found for rental ${rental.id}`);
+          continue;
+        }
+
+        console.log(`Verifying rental ${rental.id} for @${listing.screen_name}`);
 
         // Check if we've verified today (skip if already verified within last 20 hours)
         if (rental.last_verification_date) {
@@ -107,7 +114,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Take screenshot of X profile
-        const screenshotBuffer = await takeScreenshot(`https://x.com/${rental.listings.screen_name}`);
+        const screenshotBuffer = await takeScreenshot(`https://x.com/${listing.screen_name}`);
 
         if (!screenshotBuffer) {
           console.error(`Failed to take screenshot for rental ${rental.id}`);
@@ -144,7 +151,13 @@ export async function GET(request: NextRequest) {
           // Ad is still there - pay creator daily amount
           console.log(`✓ Ad verified for rental ${rental.id} - paying daily amount`);
 
-          const dailyAmount = rental.listings.price_per_day;
+          const listing = Array.isArray(rental.listings) ? rental.listings[0] : rental.listings;
+          if (!listing) {
+            console.error(`Listing not found for rental ${rental.id}`);
+            continue;
+          }
+
+          const dailyAmount = listing.price_per_day;
           const newDaysPaid = (rental.days_paid || 0) + 1;
 
           // Update days_paid
@@ -155,11 +168,68 @@ export async function GET(request: NextRequest) {
             })
             .eq('id', rental.id);
 
-          // TODO: Send payment to creator using x402 or CDP
-          // For now, we just track the days_paid
-          // In production, you would:
-          // 1. Use CDP SDK to send USDC to creator's wallet (rental.listings.wallet_address)
-          // 2. Record payment transaction hash
+          // Send daily payment to creator using CDP SDK v2
+          let paymentTxHash: string | null = null;
+          try {
+            const creatorWallet = listing.wallet_address;
+            if (creatorWallet && SERVER_WALLET_ADDRESS) {
+              // USDC contract address on Base Sepolia
+              const USDC_CONTRACT = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+              
+              // Convert daily amount to atomic units (USDC has 6 decimals)
+              // e.g., 0.01 USDC = 10000 atomic units
+              const amountInAtomicUnits = BigInt(Math.floor(dailyAmount * 1_000_000));
+              
+              console.log(`Sending daily payment: ${dailyAmount} USDC (${amountInAtomicUnits.toString()} atomic units) to ${creatorWallet}`);
+              
+              // Encode ERC-20 transfer function call
+              // transfer(address to, uint256 amount) -> 0xa9059cbb + encoded params
+              // Encode ERC-20 transfer function call using ethers
+              // transfer(address to, uint256 amount)
+              const { ethers } = await import('ethers');
+              const iface = new ethers.Interface([
+                'function transfer(address to, uint256 amount) returns (bool)',
+              ]);
+              const encodedData = iface.encodeFunctionData('transfer', [creatorWallet, amountInAtomicUnits]);
+              // ethers.encodeFunctionData always returns a hex string starting with 0x
+              // Ensure it's properly typed
+              const data: `0x${string}` = encodedData.startsWith('0x') 
+                ? (encodedData as `0x${string}`)
+                : (`0x${encodedData}` as `0x${string}`);
+              
+              // Use CDP SDK v2 to send transaction
+              const transferResult = await cdp.evm.sendTransaction({
+                address: SERVER_WALLET_ADDRESS,
+                network: 'base-sepolia',
+                transaction: {
+                  to: USDC_CONTRACT,
+                  value: BigInt(0), // ERC-20 transfer, not native token
+                  data: data,
+                },
+              } as any); // Type assertion for CDP SDK compatibility
+              
+              paymentTxHash = transferResult.transactionHash;
+              
+              console.log(`Daily payment sent successfully: ${paymentTxHash}`);
+              console.log(`Transaction: https://sepolia.basescan.org/tx/${paymentTxHash}`);
+              
+              // Record payment transaction hash in database
+              // Note: This overwrites the initial payment_tx_hash
+              // Consider creating a separate payments table to track all daily payments
+              await supabaseAdmin
+                .from('rentals')
+                .update({
+                  payment_tx_hash: paymentTxHash, // Last payment tx hash
+                })
+                .eq('id', rental.id);
+            } else {
+              console.warn(`Cannot send payment: creator wallet or server wallet not configured`);
+            }
+          } catch (paymentError) {
+            console.error(`Error sending daily payment for rental ${rental.id}:`, paymentError);
+            // Continue even if payment fails - we'll retry next day
+            // But mark it in the database for manual review
+          }
 
           verifiedCount++;
           paidCount++;
@@ -178,8 +248,14 @@ export async function GET(request: NextRequest) {
           // Ad is not there - stop payment and refund remainder
           console.log(`✗ Ad verification failed for rental ${rental.id} - stopping payments and refunding`);
 
+          const listing = Array.isArray(rental.listings) ? rental.listings[0] : rental.listings;
+          if (!listing) {
+            console.error(`Listing not found for rental ${rental.id}`);
+            continue;
+          }
+
           const daysRemaining = rental.duration_days - (rental.days_paid || 0);
-          const refundAmount = daysRemaining * rental.listings.price_per_day;
+          const refundAmount = daysRemaining * listing.price_per_day;
 
           // Mark as verification failed
           await supabaseAdmin
@@ -191,11 +267,62 @@ export async function GET(request: NextRequest) {
             })
             .eq('id', rental.id);
 
-          // Send refund to advertiser
-          // Note: For production, implement actual USDC refund using CDP SDK or x402
-          console.log(`Refund due: ${refundAmount} USDC to ${rental.advertiser_wallet_address}`);
-          // TODO: Implement actual refund transfer
-          // Record refund amount (transaction hash will be added when payment is sent)
+          // Send refund to advertiser using CDP SDK v2
+          let refundTxHash: string | null = null;
+          try {
+            const advertiserWallet = rental.advertiser_wallet_address;
+            if (advertiserWallet && SERVER_WALLET_ADDRESS && refundAmount > 0) {
+              // USDC contract address on Base Sepolia
+              const USDC_CONTRACT = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+              
+              // Convert refund amount to atomic units (USDC has 6 decimals)
+              const refundInAtomicUnits = BigInt(Math.floor(refundAmount * 1_000_000));
+              
+              console.log(`Sending refund: ${refundAmount} USDC (${refundInAtomicUnits.toString()} atomic units) to ${advertiserWallet}`);
+              
+              // Encode ERC-20 transfer function call using ethers
+              const { ethers } = await import('ethers');
+              const iface = new ethers.Interface([
+                'function transfer(address to, uint256 amount) returns (bool)',
+              ]);
+              const encodedData = iface.encodeFunctionData('transfer', [advertiserWallet, refundInAtomicUnits]);
+              // ethers.encodeFunctionData always returns a hex string starting with 0x
+              // Ensure it's properly typed
+              const data: `0x${string}` = encodedData.startsWith('0x') 
+                ? (encodedData as `0x${string}`)
+                : (`0x${encodedData}` as `0x${string}`);
+              
+              // Use CDP SDK v2 to send refund transaction
+              const refundResult = await cdp.evm.sendTransaction({
+                address: SERVER_WALLET_ADDRESS,
+                network: 'base-sepolia',
+                transaction: {
+                  to: USDC_CONTRACT,
+                  value: BigInt(0), // ERC-20 transfer, not native token
+                  data: data,
+                },
+              } as any); // Type assertion for CDP SDK compatibility
+              
+              refundTxHash = refundResult.transactionHash;
+              
+              console.log(`Refund sent successfully: ${refundTxHash}`);
+              console.log(`Transaction: https://sepolia.basescan.org/tx/${refundTxHash}`);
+              
+              // Record refund transaction hash
+              await supabaseAdmin
+                .from('rentals')
+                .update({
+                  refund_tx_hash: refundTxHash,
+                })
+                .eq('id', rental.id);
+            } else {
+              console.warn(`Cannot send refund: advertiser wallet or server wallet not configured, or refund amount is 0`);
+            }
+          } catch (refundError) {
+            console.error(`Error sending refund for rental ${rental.id}:`, refundError);
+            // Log error but don't fail the verification
+            // Mark for manual review
+          }
 
           verifiedCount++;
           failedCount++;

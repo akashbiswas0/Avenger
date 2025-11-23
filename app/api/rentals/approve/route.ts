@@ -68,8 +68,11 @@ export async function POST(request: NextRequest) {
     // Update rental approval status
     const updateData: any = {
       approval_status: action,
-      updated_at: new Date().toISOString(),
     };
+
+    // Add updated_at if column exists (will be added by migration)
+    // Supabase might handle this automatically with triggers, but we set it explicitly
+    updateData.updated_at = new Date().toISOString();
 
     if (action === 'approved') {
       // If approved, set status to active and store image hash
@@ -79,9 +82,18 @@ export async function POST(request: NextRequest) {
         updateData.ad_image_hash = adImageHash;
       }
     } else {
-      // If rejected, keep status as inactive
+      // If rejected, set status to rejected
       updateData.status = 'rejected';
     }
+
+    console.log('Updating rental with data:', {
+      rentalId,
+      action,
+      updateData: {
+        ...updateData,
+        ad_image_hash: updateData.ad_image_hash ? `${updateData.ad_image_hash.substring(0, 20)}...` : null,
+      },
+    });
 
     const { data: updatedRental, error: updateError } = await supabaseAdmin
       .from('rentals')
@@ -91,9 +103,21 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (updateError) {
-      console.error('Error updating rental:', updateError);
+      console.error('Error updating rental:', {
+        error: updateError,
+        code: updateError.code,
+        message: updateError.message,
+        details: updateError.details,
+        hint: updateError.hint,
+        updateData,
+      });
       return NextResponse.json(
-        { error: 'Failed to update rental', details: updateError.message },
+        { 
+          error: 'Failed to update rental', 
+          details: updateError.message,
+          code: updateError.code,
+          hint: updateError.hint,
+        },
         { status: 500 }
       );
     }

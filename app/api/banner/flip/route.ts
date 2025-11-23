@@ -60,14 +60,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if rental is approved
-    if (rental.approval_status !== 'approved') {
-      return NextResponse.json(
-        { error: 'Rental not approved by creator' },
-        { status: 400 }
-      );
-    }
-
     // 2. Get the listing with X account info
     const { data: listing, error: listingError } = await supabaseAdmin
       .from('listings')
@@ -84,10 +76,12 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Get the X account with encrypted tokens
+    // Note: We're using OAuth 2.0 which doesn't have token_secret
+    // OAuth 1.0a is required for X v1.1 API, so this will fail gracefully
     let xAccountData;
     const { data: xAccount, error: xAccountError } = await supabaseAdmin
       .from('x_accounts')
-      .select('id, encrypted_access_token, encrypted_token_secret, x_user_id')
+      .select('id, encrypted_access_token, x_user_id')
       .eq('id', listing.x_account_id || listing.x_user_id)
       .single();
 
@@ -95,7 +89,7 @@ export async function POST(request: NextRequest) {
       // Try to find by x_user_id if x_account_id wasn't set
       const { data: xAccountByUserId } = await supabaseAdmin
         .from('x_accounts')
-        .select('id, encrypted_access_token, encrypted_token_secret, x_user_id')
+        .select('id, encrypted_access_token, x_user_id')
         .eq('x_user_id', listing.x_user_id)
         .single();
 
@@ -112,18 +106,48 @@ export async function POST(request: NextRequest) {
       xAccountData = xAccount;
     }
 
+    // Check if encrypted_token_secret column exists (OAuth 1.0a) - it won't exist with OAuth 2.0
+    // Try to query it - if column doesn't exist, Supabase will return an error
+    let hasOAuth1Tokens = false;
+    let tokenSecret: string | null = null;
+    
+    // Try to query for token_secret - if column doesn't exist, query will return error code 42703
+    const { data: tokenCheck, error: tokenError } = await supabaseAdmin
+      .from('x_accounts')
+      .select('encrypted_token_secret')
+      .eq('id', xAccountData.id)
+      .single();
+    
+    // Check if error is due to missing column (PostgreSQL error code 42703)
+    if (tokenError) {
+      if (tokenError.code === '42703' || tokenError.message?.includes('does not exist')) {
+        // Column doesn't exist - we're using OAuth 2.0
+        console.log('OAuth 1.0a token_secret column not found - using OAuth 2.0');
+        hasOAuth1Tokens = false;
+      } else {
+        // Other error (e.g., record not found)
+        console.error('Error checking for token_secret:', tokenError);
+        hasOAuth1Tokens = false;
+      }
+    } else if (tokenCheck) {
+      // Query succeeded - check if we have the token
+      const checkData = tokenCheck as { encrypted_token_secret?: string };
+      if (checkData.encrypted_token_secret) {
+        hasOAuth1Tokens = true;
+        tokenSecret = checkData.encrypted_token_secret;
+      }
+    }
+
     // Check if we have OAuth 1.0a tokens
     // Note: We're currently storing OAuth 2.0 tokens, but X v1.1 API requires OAuth 1.0a
-    // For now, we'll check if encrypted_token_secret exists (OAuth 1.0a) or use OAuth 2.0 approach
-    const hasOAuth1Tokens = xAccountData.encrypted_token_secret;
-
-    if (!hasOAuth1Tokens) {
+    if (!hasOAuth1Tokens || !tokenSecret) {
       console.warn('OAuth 1.0a tokens not found. X v1.1 banner update requires OAuth 1.0a tokens.');
-      // TODO: Implement OAuth 1.0a token storage or use OAuth 2.0 with v2 API if available
       return NextResponse.json(
         { 
           error: 'OAuth 1.0a tokens required for banner update',
-          message: 'Please reconnect your X account with OAuth 1.0a to enable banner updates'
+          message: 'X v1.1 banner API requires OAuth 1.0a authentication. The current implementation uses OAuth 2.0 which does not provide the token_secret needed for OAuth 1.0a signature.',
+          details: 'To enable banner updates, you need to implement OAuth 1.0a flow which provides both access_token and token_secret. OAuth 2.0 only provides access_token (Bearer token) which cannot be used with X v1.1 API endpoints.',
+          solution: 'Implement OAuth 1.0a authentication flow and store both encrypted_access_token and encrypted_token_secret in the x_accounts table.'
         },
         { status: 400 }
       );
@@ -131,11 +155,11 @@ export async function POST(request: NextRequest) {
 
     // 4. Decrypt OAuth 1.0a tokens
     let accessToken: string;
-    let tokenSecret: string;
+    let decryptedTokenSecret: string;
 
     try {
       accessToken = decrypt(xAccountData.encrypted_access_token);
-      tokenSecret = decrypt(xAccountData.encrypted_token_secret);
+      decryptedTokenSecret = decrypt(tokenSecret);
     } catch (decryptError) {
       console.error('Failed to decrypt tokens:', decryptError);
       return NextResponse.json(
@@ -195,7 +219,7 @@ export async function POST(request: NextRequest) {
 
     const token = {
       key: accessToken,
-      secret: tokenSecret,
+      secret: decryptedTokenSecret,
     };
 
     const authHeader = oauth.toHeader(oauth.authorize(requestData, token));
