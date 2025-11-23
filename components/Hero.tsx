@@ -12,7 +12,7 @@ const Hero = () => {
           Advertisers pay you to display banners on your profile. You control what shows, you set the price.
         </p>
         <div className={styles.ctaButtons}>
-          <a href="/listing" className={`${styles.button} ${styles.buttonPrimary}`}>
+          <a href="/verification" className={`${styles.button} ${styles.buttonPrimary}`}>
             Sell My Header
           </a>
           <button className={`${styles.button} ${styles.buttonSecondary}`}>

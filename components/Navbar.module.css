@@ -129,6 +129,30 @@
   box-shadow: 0 0 0 0 var(--text-primary);
 }
 
+.profileBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background-color: var(--accent-blue);
+  color: white;
+  border: 2px solid var(--text-primary);
+  box-shadow: 3px 3px 0 0 var(--text-primary);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.profileIcon {
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+.profileName {
+  font-weight: 700;
+}
+
 .mobileMenuButton {
   display: none;
   background: none;
@@ -230,6 +254,14 @@
     margin-top: 8px;
   }
   
+  .profileBadge {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+    font-size: 16px;
+    margin-top: 8px;
+  }
+  
   .logoText {
     font-size: 20px;
   }
@@ -238,6 +270,50 @@
     width: 48px;
     height: 48px;
     font-size: 20px;
+  }
+}
+
+.walletButtonContainer {
+  display: flex;
+  align-items: center;
+}
+
+.walletButtonContainer :global(button) {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  padding: 10px 24px;
+  border: 2px solid var(--text-primary);
+  background-color: var(--accent-purple);
+  color: white;
+  box-shadow: 3px 3px 0 0 var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.walletButtonContainer :global(button:hover) {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 0 var(--text-primary);
+  background-color: #7e22ce;
+}
+
+.walletButtonContainer :global(button:active) {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 0 var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .walletButtonContainer {
+    width: 100%;
+    margin-top: 8px;
+  }
+  
+  .walletButtonContainer :global(button) {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 16px;
   }
 }
 

@@ -65,7 +65,7 @@ The application uses Supabase to store encrypted X OAuth tokens. See `supabase/s
 
 ## OAuth Flow
 
-1. User clicks "Connect X" on `/listing` page
+1. User clicks "Connect X" on `/verification` page
 2. Backend initiates OAuth 1.0a flow
 3. User authorizes on X/Twitter
 4. Callback receives access tokens
@@ -80,7 +80,7 @@ xbanner/
 │   ├── api/
 │   │   ├── x-oauth/          # OAuth endpoints
 │   │   └── x-account/        # Account management
-│   ├── listing/              # Listing page
+│   ├── verification/         # Verification page
 │   ├── layout.tsx
 │   ├── page.tsx
 │   └── globals.css

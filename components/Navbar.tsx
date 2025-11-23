@@ -1,11 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { AuthButton } from '@coinbase/cdp-react/components/AuthButton';
+import { useIsSignedIn, useIsInitialized } from '@coinbase/cdp-hooks';
 import styles from './Navbar.module.css';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [connectedAccount, setConnectedAccount] = useState<string | null>(null);
+  const { isInitialized } = useIsInitialized();
+  const { isSignedIn } = useIsSignedIn();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -13,6 +18,39 @@ const Navbar = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    // Check if user has a connected account
+    const checkConnectedAccount = async () => {
+      try {
+        const response = await fetch('/api/x-account/check');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.connected && data.screenName) {
+            setConnectedAccount(data.screenName);
+          }
+        }
+      } catch (err) {
+        console.error('Error checking connected account:', err);
+      }
+    };
+
+    checkConnectedAccount();
+
+    // Listen for account connection events
+    const handleAccountConnected = () => {
+      checkConnectedAccount();
+    };
+    window.addEventListener('accountConnected', handleAccountConnected);
+    
+    // Also check periodically (in case of same-tab updates)
+    const interval = setInterval(checkConnectedAccount, 2000);
+    
+    return () => {
+      window.removeEventListener('accountConnected', handleAccountConnected);
+      clearInterval(interval);
+    };
   }, []);
 
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -54,9 +92,21 @@ const Navbar = () => {
           >
             How It Works
           </a>
-          <button className={styles.ctaButton}>
-            Get Started
-          </button>
+          {connectedAccount ? (
+            <div className={styles.profileBadge}>
+              <span className={styles.profileIcon}>@</span>
+              <span className={styles.profileName}>{connectedAccount}</span>
+            </div>
+          ) : (
+            <button className={styles.ctaButton}>
+              Get Started
+            </button>
+          )}
+          {isInitialized && !isSignedIn && (
+            <div className={styles.walletButtonContainer}>
+              <AuthButton />
+            </div>
+          )}
         </div>
 
         <button 
