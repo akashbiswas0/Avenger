@@ -2,15 +2,31 @@
 
 import React, { useState, useEffect } from 'react';
 import { AuthButton } from '@coinbase/cdp-react/components/AuthButton';
-import { useIsSignedIn, useIsInitialized } from '@coinbase/cdp-hooks';
+import { useIsSignedIn, useIsInitialized, useEvmAddress, useSignOut } from '@coinbase/cdp-hooks';
 import styles from './Navbar.module.css';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [connectedAccount, setConnectedAccount] = useState<string | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
+  const [showDisconnectMenu, setShowDisconnectMenu] = useState(false);
   const { isInitialized } = useIsInitialized();
   const { isSignedIn } = useIsSignedIn();
+  const evmAddress = useEvmAddress();
+  const { signOut } = useSignOut();
+
+  // Debug: Log evmAddress structure
+  useEffect(() => {
+    if (evmAddress) {
+      console.log('evmAddress structure:', {
+        type: typeof evmAddress,
+        value: evmAddress,
+        stringified: JSON.stringify(evmAddress),
+        keys: typeof evmAddress === 'object' ? Object.keys(evmAddress as any) : null,
+      });
+    }
+  }, [evmAddress]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -62,6 +78,53 @@ const Navbar = () => {
     setIsMobileMenuOpen(false);
   };
 
+  const getAddressString = (): string => {
+    if (typeof evmAddress === 'string') {
+      return evmAddress;
+    } else if (evmAddress && typeof evmAddress === 'object') {
+      const address = (evmAddress as any).address || 
+                     (evmAddress as any).evmAddress || 
+                     (evmAddress as any).value ||
+                     '';
+      
+      if (address) return address;
+      
+      // Try to extract from JSON
+      const str = JSON.stringify(evmAddress);
+      const addressMatch = str.match(/0x[a-fA-F0-9]{40}/);
+      if (addressMatch) {
+        return addressMatch[0];
+      }
+    }
+    return '';
+  };
+
+  const copyWalletAddress = async () => {
+    const addressString = getAddressString();
+    
+    if (!addressString || addressString === '[object Object]' || !addressString.startsWith('0x')) {
+      return;
+    }
+    
+    try {
+      await navigator.clipboard.writeText(addressString);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy address:', err);
+    }
+  };
+
+  const handleDisconnectWallet = async () => {
+    try {
+      await signOut();
+      setShowDisconnectMenu(false);
+      console.log('Wallet disconnected successfully');
+    } catch (err) {
+      console.error('Error disconnecting wallet:', err);
+    }
+  };
+
   return (
     <nav className={`${styles.navbar} ${isScrolled ? styles.scrolled : ''}`}>
       <div className={styles.container}>
@@ -79,9 +142,8 @@ const Navbar = () => {
             Sell Space
           </a>
           <a 
-            href="#buy" 
+            href="/marketplace" 
             className={styles.navLink}
-            onClick={(e) => handleLinkClick(e, '#buy')}
           >
             Buy Ads
           </a>
@@ -92,12 +154,51 @@ const Navbar = () => {
           >
             How It Works
           </a>
-          {connectedAccount ? (
+          {connectedAccount && (
             <div className={styles.profileBadge}>
               <span className={styles.profileIcon}>@</span>
               <span className={styles.profileName}>{connectedAccount}</span>
             </div>
-          ) : (
+          )}
+          {isSignedIn && evmAddress && (() => {
+            const addressString = getAddressString();
+            
+            // Don't render if address is invalid or still object-like
+            if (!addressString || 
+                addressString === '[object Object]' || 
+                addressString.length < 10 ||
+                !addressString.startsWith('0x')) {
+              return null;
+            }
+            
+            return (
+              <div 
+                className={styles.walletBadgeContainer}
+                onMouseEnter={() => setShowDisconnectMenu(true)}
+                onMouseLeave={() => setShowDisconnectMenu(false)}
+              >
+                <div className={styles.walletBadge} onClick={copyWalletAddress} title="Click to copy">
+                  <span className={styles.walletIcon}>💼</span>
+                  <span className={styles.walletAddress}>
+                    {addressString.length > 10
+                      ? `${addressString.slice(0, 6)}...${addressString.slice(-4)}`
+                      : addressString}
+                  </span>
+                  {isCopied && <span className={styles.copiedText}>✓</span>}
+                </div>
+                {showDisconnectMenu && (
+                  <button 
+                    className={styles.disconnectButton}
+                    onClick={handleDisconnectWallet}
+                    title="Disconnect wallet"
+                  >
+                    Disconnect
+                  </button>
+                )}
+              </div>
+            );
+          })()}
+          {!connectedAccount && !isSignedIn && (
             <button className={styles.ctaButton}>
               Get Started
             </button>

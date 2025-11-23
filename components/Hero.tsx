@@ -15,9 +15,9 @@ const Hero = () => {
           <a href="/verification" className={`${styles.button} ${styles.buttonPrimary}`}>
             Sell My Header
           </a>
-          <button className={`${styles.button} ${styles.buttonSecondary}`}>
+          <a href="/marketplace" className={`${styles.button} ${styles.buttonSecondary}`}>
             Buy Ad Space
-          </button>
+          </a>
         </div>
       </div>
     </section>

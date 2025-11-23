@@ -153,6 +153,85 @@
   font-weight: 700;
 }
 
+.walletBadgeContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.walletBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background-color: var(--accent-purple);
+  color: white;
+  border: 2px solid var(--text-primary);
+  box-shadow: 3px 3px 0 0 var(--text-primary);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.walletBadge:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 0 var(--text-primary);
+  background-color: #7e22ce;
+}
+
+.disconnectButton {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  padding: 8px 16px;
+  background-color: var(--accent-pink);
+  color: white;
+  border: 2px solid var(--text-primary);
+  box-shadow: 3px 3px 0 0 var(--text-primary);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.disconnectButton:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 0 var(--text-primary);
+  background-color: #ff4d7a;
+}
+
+.walletIcon {
+  font-size: 14px;
+}
+
+.walletAddress {
+  font-family: monospace;
+  font-weight: 700;
+}
+
+.copiedText {
+  font-size: 12px;
+  margin-left: 4px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .mobileMenuButton {
   display: none;
   background: none;
@@ -260,6 +339,26 @@
     padding: 14px 20px;
     font-size: 16px;
     margin-top: 8px;
+  }
+  
+  .walletBadgeContainer {
+    width: 100%;
+    margin-top: 8px;
+  }
+  
+  .walletBadge {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+    font-size: 16px;
+  }
+  
+  .disconnectButton {
+    position: static;
+    width: 100%;
+    margin-top: 8px;
+    padding: 12px 20px;
+    font-size: 14px;
   }
   
   .logoText {
