@@ -1,0 +1,99 @@
+.about {
+  padding: 100px 20px;
+  background-color: var(--bg-secondary);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: clamp(42px, 5vw, 64px);
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 16px;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.subtitle {
+  font-size: clamp(18px, 2vw, 22px);
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 64px;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 32px;
+  margin-top: 48px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.columnTitle {
+  font-size: 28px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.stepCard {
+  border: var(--border-width) solid var(--text-primary);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 var(--text-primary);
+  background-color: var(--bg-primary);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stepIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--accent-blue);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--border-width) solid var(--text-primary);
+  box-shadow: 4px 4px 0 0 var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.stepIconAlt {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.stepTitle {
+  font-size: 20px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stepDescription {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .about {
+    padding: 60px 20px;
+  }
+  
+  .columns {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+

@@ -1,0 +1,92 @@
+.hero {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  background-color: var(--bg-primary);
+}
+
+.container {
+  max-width: 900px;
+  text-align: center;
+}
+
+.headline {
+  font-size: clamp(36px, 6vw, 72px);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 24px;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.subheadline {
+  font-size: clamp(18px, 2.5vw, 24px);
+  color: var(--text-secondary);
+  margin-bottom: 48px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+.ctaButtons {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.button {
+  border: var(--border-width) solid var(--text-primary);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 var(--text-primary);
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  padding: 16px 32px;
+  font-size: 18px;
+  min-width: 200px;
+}
+
+.buttonPrimary {
+  background-color: var(--accent-blue);
+  color: white;
+}
+
+.buttonSecondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.button:hover {
+  transform: translate(2px, 2px);
+  box-shadow: calc(var(--shadow-offset) - 2px) calc(var(--shadow-offset) - 2px) 0 0 var(--text-primary);
+}
+
+.button:active {
+  transform: translate(var(--shadow-offset), var(--shadow-offset));
+  box-shadow: 0 0 0 0 var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .hero {
+    min-height: 70vh;
+    padding: 60px 20px;
+  }
+  
+  .ctaButtons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .button {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
