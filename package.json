@@ -12,10 +12,15 @@
     "@coinbase/cdp-core": "^0.0.67",
     "@coinbase/cdp-hooks": "^0.0.67",
     "@coinbase/cdp-react": "^0.0.67",
+    "@coinbase/cdp-sdk": "^1.0.0",
     "@supabase/supabase-js": "^2.38.0",
+    "ethers": "^6.15.0",
     "next": "^14.0.0",
+    "oauth-1.0a": "^2.2.6",
+    "puppeteer": "^24.31.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "sharp": "^0.34.5",
     "x402-fetch": "^0.7.3"
   },
   "devDependencies": {

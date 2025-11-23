@@ -81,17 +81,42 @@ export default function ListingPage() {
 
       const addressString = typeof evmAddress === 'string' ? evmAddress : String(evmAddress || '');
       
+      // First, try to get the x_account_id from x_accounts table
+      let xAccountId: string | null = null;
+      const { data: accountData } = await supabase
+        .from('x_accounts')
+        .select('id')
+        .eq('x_user_id', xAccount.xUserId)
+        .single();
+      
+      if (accountData) {
+        xAccountId = accountData.id;
+      }
+
+      // Prepare listing data
+      const listingData: any = {
+        x_user_id: xAccount.xUserId,
+        screen_name: xAccount.screenName,
+        wallet_address: addressString,
+        price_per_day: parseFloat(price),
+        min_days: parseInt(minDays),
+        message: message || null,
+        active: true,
+      };
+
+      // Add x_account_id if we found it
+      if (xAccountId) {
+        listingData.x_account_id = xAccountId;
+      }
+
+      console.log('Creating listing with data:', {
+        ...listingData,
+        wallet_address: addressString.substring(0, 10) + '...', // Log partial address for security
+      });
+
       const { data, error: supabaseError } = await supabase
         .from('listings')
-        .insert({
-          x_user_id: xAccount.xUserId,
-          screen_name: xAccount.screenName,
-          wallet_address: addressString,
-          price_per_day: parseFloat(price),
-          min_days: parseInt(minDays),
-          message: message || null,
-          active: true,
-        })
+        .insert(listingData)
         .select()
         .single();
 
@@ -102,8 +127,17 @@ export default function ListingPage() {
         return;
       }
 
-      // Success - redirect to home page
-      router.push('/');
+      console.log('Listing created successfully:', data.id);
+      console.log('Listing data saved to database:', {
+        id: data.id,
+        screen_name: data.screen_name,
+        price_per_day: data.price_per_day,
+        active: data.active
+      });
+
+      // Success - redirect to marketplace to see the new listing
+      // The marketplace will automatically fetch the new listing from the database
+      router.push('/marketplace');
     } catch (err) {
       console.error('Error creating listing:', err);
       setError(err instanceof Error ? err.message : 'Failed to create listing');
@@ -143,7 +177,7 @@ export default function ListingPage() {
 
               <div className={styles.formGroup}>
                 <label className={styles.label}>
-                  Price per day (ETH)
+                  Price per day (USDC)
                 </label>
                 <input
                   type="number"

@@ -1,0 +1,110 @@
+.container {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background-color: var(--bg-primary);
+}
+
+.successCard {
+  border: 2px solid var(--text-primary);
+  box-shadow: 6px 6px 0 0 var(--text-primary);
+  background-color: var(--bg-secondary);
+  padding: 48px 40px;
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+}
+
+.successIcon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  background-color: var(--accent-blue);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: 700;
+  border: 2px solid var(--text-primary);
+  box-shadow: 4px 4px 0 0 var(--text-primary);
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.message {
+  font-size: 18px;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.details {
+  background-color: var(--bg-primary);
+  border: 2px solid var(--text-primary);
+  padding: 24px;
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+.details p {
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.details p:last-child {
+  margin-bottom: 0;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.button {
+  padding: 16px 32px;
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 2px solid var(--text-primary);
+  background-color: var(--accent-blue);
+  color: white;
+  box-shadow: 4px 4px 0 0 var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.button:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 0 var(--text-primary);
+  background-color: #3a7bc8;
+}
+
+.redirect {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .successCard {
+    padding: 32px 24px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+}
+

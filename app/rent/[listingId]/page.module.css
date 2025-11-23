@@ -1,0 +1,272 @@
+.container {
+  min-height: calc(100vh - 80px);
+  padding: 60px 20px;
+  background-color: var(--bg-primary);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.content {
+  width: 100%;
+}
+
+.title {
+  font-size: clamp(36px, 5vw, 48px);
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 16px;
+  font-family: Georgia, 'Times New Roman', serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.subtitle {
+  font-size: clamp(16px, 2vw, 20px);
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 48px;
+  line-height: 1.6;
+}
+
+.loading {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 60px 20px;
+}
+
+.errorCard {
+  border: 2px solid var(--accent-pink);
+  box-shadow: 4px 4px 0 0 var(--text-primary);
+  background-color: var(--accent-pink);
+  padding: 32px;
+  text-align: center;
+}
+
+.errorCard p {
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.backButton {
+  padding: 12px 24px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 2px solid var(--text-primary);
+  background-color: var(--bg-secondary);
+  box-shadow: 3px 3px 0 0 var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.backButton:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 0 var(--text-primary);
+}
+
+.warningCard {
+  border: 2px solid var(--accent-yellow);
+  box-shadow: 4px 4px 0 0 var(--text-primary);
+  background-color: var(--accent-yellow);
+  padding: 24px;
+  margin-bottom: 32px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.rentalForm {
+  border: 2px solid var(--text-primary);
+  box-shadow: 6px 6px 0 0 var(--text-primary);
+  background-color: var(--bg-secondary);
+  padding: 48px 40px;
+}
+
+.errorMessage {
+  background-color: var(--accent-pink);
+  border: 2px solid var(--text-primary);
+  box-shadow: 3px 3px 0 0 var(--text-primary);
+  padding: 16px;
+  margin-bottom: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.formSection {
+  margin-bottom: 32px;
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.imageUpload {
+  width: 100%;
+}
+
+.fileInput {
+  display: none;
+}
+
+.uploadLabel {
+  display: block;
+  width: 100%;
+  min-height: 200px;
+  border: 2px dashed var(--text-primary);
+  background-color: var(--bg-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  overflow: hidden;
+}
+
+.uploadLabel:hover {
+  background-color: var(--accent-yellow);
+  border-color: var(--text-primary);
+}
+
+.previewImage {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.uploadPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: 12px;
+  color: var(--text-secondary);
+}
+
+.uploadPlaceholder span:first-child {
+  font-size: 48px;
+}
+
+.uploadPlaceholder small {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.durationInput {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.input {
+  padding: 12px 16px;
+  font-size: 18px;
+  font-weight: 700;
+  border: 2px solid var(--text-primary);
+  background-color: var(--bg-secondary);
+  box-shadow: 3px 3px 0 0 var(--text-primary);
+  width: 120px;
+  font-family: inherit;
+}
+
+.input:focus {
+  outline: none;
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 0 var(--text-primary);
+}
+
+.durationLabel {
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.helpText {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+.priceSection {
+  border: 2px solid var(--text-primary);
+  box-shadow: 3px 3px 0 0 var(--text-primary);
+  background-color: var(--bg-primary);
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.priceRowTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 2px solid var(--text-primary);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.priceValue {
+  font-weight: 700;
+  color: var(--accent-blue);
+}
+
+.totalPrice {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--accent-blue);
+}
+
+.rentButton {
+  width: 100%;
+  padding: 18px 32px;
+  font-size: 20px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 2px solid var(--text-primary);
+  background-color: var(--accent-blue);
+  color: white;
+  box-shadow: 4px 4px 0 0 var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rentButton:hover:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 0 var(--text-primary);
+  background-color: #3a7bc8;
+}
+
+.rentButton:active:not(:disabled) {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 0 var(--text-primary);
+}
+
+.rentButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .rentalForm {
+    padding: 32px 24px;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+}
+
