@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { CDPProvider } from './cdp-provider'
 
 export const metadata: Metadata = {
   title: 'RentMyHeader - Turn your Twitter header into passive income',
@@ -13,7 +14,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <CDPProvider>
+          {children}
+        </CDPProvider>
+      </body>
     </html>
   )
 }

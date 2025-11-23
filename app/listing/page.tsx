@@ -2,91 +2,112 @@
 
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
+import { useIsSignedIn, useEvmAddress } from '@coinbase/cdp-hooks';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 
 export default function ListingPage() {
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [connectedAccount, setConnectedAccount] = useState<string | null>(null);
+  const [price, setPrice] = useState('0.01');
+  const [minDays, setMinDays] = useState('7');
+  const [message, setMessage] = useState('');
+  const [agreed, setAgreed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [xAccount, setXAccount] = useState<{ screenName: string; xUserId: string } | null>(null);
+  
+  const { isSignedIn } = useIsSignedIn();
+  const evmAddress = useEvmAddress();
+  const router = useRouter();
 
   useEffect(() => {
-    // Check URL params for OAuth callback result
-    const params = new URLSearchParams(window.location.search);
-    const connected = params.get('connected');
-    const error = params.get('error');
-    
-    if (connected === 'true') {
-      // Refresh to show connected state
-      checkConnectedAccount();
-      // Clean URL
-      window.history.replaceState({}, '', '/listing');
-    } else if (error) {
-      setError(getErrorMessage(error));
-    } else {
-      // Check if user already has a connected account
-      checkConnectedAccount();
-    }
-  }, []);
-  
-  const getErrorMessage = (error: string): string => {
-    switch (error) {
-      case 'access_denied':
-        return 'X account connection was cancelled.';
-      case 'session_expired':
-        return 'Session expired. Please try again.';
-      case 'not_authenticated':
-        return 'Please log in to connect your X account.';
-      case 'database_error':
-        return 'Failed to save account. Please try again.';
-      case 'oauth_failed':
-        return 'Failed to connect X account. Please try again.';
-      default:
-        return 'An error occurred. Please try again.';
-    }
-  };
-
-  const checkConnectedAccount = async () => {
-    try {
-      const response = await fetch('/api/x-account/check');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.connected && data.screenName) {
-          setConnectedAccount(data.screenName);
+    // Get X account info from sessionStorage or API
+    const getXAccount = async () => {
+      const screenName = typeof window !== 'undefined' ? sessionStorage.getItem('x_account_screen_name') : null;
+      const xUserId = typeof window !== 'undefined' ? sessionStorage.getItem('x_account_id') : null;
+      
+      if (screenName && xUserId) {
+        setXAccount({ screenName, xUserId });
+      } else {
+        // Try to fetch from API
+        try {
+          const response = await fetch('/api/x-account/check');
+          if (response.ok) {
+            const data = await response.json();
+            if (data.connected && data.screenName && data.xUserId) {
+              setXAccount({ screenName: data.screenName, xUserId: data.xUserId });
+              if (typeof window !== 'undefined') {
+                sessionStorage.setItem('x_account_screen_name', data.screenName);
+                sessionStorage.setItem('x_account_id', data.xUserId);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching X account:', err);
         }
       }
-    } catch (err) {
-      console.error('Error checking connected account:', err);
-    }
-  };
+    };
 
-  const handleConnectX = async () => {
-    setIsConnecting(true);
+    getXAccount();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
 
+    if (!agreed) {
+      setError('Please agree to keep the ad banner unchanged during the rental period');
+      return;
+    }
+
+    if (!xAccount) {
+      setError('X account not connected. Please connect your X account first.');
+      return;
+    }
+
+    if (!isSignedIn || !evmAddress) {
+      setError('Wallet not connected. Please connect your wallet first.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      // Initiate OAuth flow
-      const response = await fetch('/api/x-oauth/initiate', {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to initiate OAuth');
+      if (!supabase) {
+        setError('Database not configured. Please check your environment variables.');
+        setIsSubmitting(false);
+        return;
       }
 
-      const data = await response.json();
+      const addressString = typeof evmAddress === 'string' ? evmAddress : String(evmAddress || '');
       
-      // Store oauth_token_secret temporarily in sessionStorage
-      // In production, this should be stored server-side
-      if (data.oauthTokenSecret) {
-        sessionStorage.setItem('oauth_token_secret', data.oauthTokenSecret);
-        sessionStorage.setItem('oauth_token', data.oauthToken);
+      const { data, error: supabaseError } = await supabase
+        .from('listings')
+        .insert({
+          x_user_id: xAccount.xUserId,
+          screen_name: xAccount.screenName,
+          wallet_address: addressString,
+          price_per_day: parseFloat(price),
+          min_days: parseInt(minDays),
+          message: message || null,
+          active: true,
+        })
+        .select()
+        .single();
+
+      if (supabaseError) {
+        console.error('Supabase error:', supabaseError);
+        setError(supabaseError.message || 'Failed to create listing');
+        setIsSubmitting(false);
+        return;
       }
-      
-      // Redirect to X OAuth authorization page
-      window.location.href = data.authorizationUrl;
+
+      // Success - redirect to home page
+      router.push('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to connect X account');
-      setIsConnecting(false);
+      console.error('Error creating listing:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create listing');
+      setIsSubmitting(false);
     }
   };
 
@@ -95,63 +116,101 @@ export default function ListingPage() {
       <Navbar />
       <div className={styles.container}>
         <div className={styles.content}>
-          <h1 className={styles.title}>List Your Header</h1>
+          <h1 className={styles.title}>List My Banner</h1>
           <p className={styles.subtitle}>
-            Connect your X account to start earning from your header space
+            Set your price and start earning from your header space
           </p>
 
-          {connectedAccount ? (
-            <div className={styles.successCard}>
-              <div className={styles.successIcon}>✓</div>
-              <h2 className={styles.successTitle}>Successfully connected</h2>
-              <p className={styles.successHandle}>@{connectedAccount}</p>
-              <button 
-                className={styles.disconnectButton}
-                onClick={async () => {
-                  try {
-                    await fetch('/api/x-account/disconnect', { method: 'POST' });
-                    setConnectedAccount(null);
-                  } catch (err) {
-                    console.error('Error disconnecting:', err);
-                  }
-                }}
-              >
-                Disconnect Account
-              </button>
+          {!xAccount && (
+            <div className={styles.warningCard}>
+              <p>⚠️ Please connect your X account first on the <a href="/verification">verification page</a>.</p>
             </div>
-          ) : (
-            <div className={styles.connectCard}>
-              <div className={styles.iconWrapper}>
-                <svg 
-                  className={styles.xIcon} 
-                  viewBox="0 0 24 24" 
-                  fill="currentColor"
-                >
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                </svg>
-              </div>
-              <h2 className={styles.connectTitle}>Connect Your X Account</h2>
-              <p className={styles.connectDescription}>
-                Link your X (Twitter) account to start selling your header space to advertisers.
-                You'll be able to set your own prices and control which ads appear.
-              </p>
+          )}
+
+          {!isSignedIn && (
+            <div className={styles.warningCard}>
+              <p>⚠️ Please connect your wallet first.</p>
+            </div>
+          )}
+
+          {xAccount && isSignedIn && (
+            <form onSubmit={handleSubmit} className={styles.formCard}>
               {error && (
                 <div className={styles.errorMessage}>
                   {error}
                 </div>
               )}
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>
+                  Price per day (ETH)
+                </label>
+                <input
+                  type="number"
+                  step="0.001"
+                  min="0.001"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="0.01"
+                  className={styles.input}
+                  required
+                />
+                <p className={styles.helpText}>
+                  How much you earn every day the ad stays live
+                </p>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>
+                  Minimum rental days
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={minDays}
+                  onChange={(e) => setMinDays(e.target.value)}
+                  placeholder="7"
+                  className={styles.input}
+                  required
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>
+                  Short message to advertisers (optional)
+                </label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="My audience loves Web3 tools and memes!"
+                  rows={3}
+                  className={styles.textarea}
+                />
+              </div>
+
+              <div className={styles.checkboxGroup}>
+                <label className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={(e) => setAgreed(e.target.checked)}
+                    className={styles.checkbox}
+                  />
+                  <span>I agree to keep the ad banner unchanged during the rental period</span>
+                </label>
+              </div>
+
               <button
-                className={styles.connectButton}
-                onClick={handleConnectX}
-                disabled={isConnecting}
+                type="submit"
+                className={styles.submitButton}
+                disabled={isSubmitting || !agreed}
               >
-                {isConnecting ? 'Connecting...' : 'Connect X'}
+                {isSubmitting ? 'Creating Listing...' : 'List My Banner for Rent'}
               </button>
-            </div>
+            </form>
           )}
         </div>
       </div>
     </main>
   );
 }
-
