@@ -1,0 +1,168 @@
+.container {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background-color: var(--bg-primary);
+}
+
+.content {
+  max-width: 600px;
+  width: 100%;
+}
+
+.title {
+  font-size: clamp(36px, 5vw, 48px);
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 16px;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.subtitle {
+  font-size: clamp(16px, 2vw, 20px);
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 48px;
+}
+
+.connectCard,
+.successCard {
+  border: 2px solid var(--text-primary);
+  box-shadow: 6px 6px 0 0 var(--text-primary);
+  background-color: var(--bg-secondary);
+  padding: 48px 40px;
+  text-align: center;
+}
+
+.iconWrapper {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  background-color: var(--text-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 4px 4px 0 0 var(--text-primary);
+}
+
+.xIcon {
+  width: 48px;
+  height: 48px;
+  color: white;
+}
+
+.connectTitle,
+.successTitle {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.connectDescription {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.connectButton {
+  width: 100%;
+  padding: 16px 32px;
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 2px solid var(--text-primary);
+  background-color: var(--accent-blue);
+  color: white;
+  box-shadow: 4px 4px 0 0 var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.connectButton:hover:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 0 var(--text-primary);
+  background-color: #3a7bc8;
+}
+
+.connectButton:active:not(:disabled) {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 0 var(--text-primary);
+}
+
+.connectButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.successIcon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  background-color: #4ade80;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  color: white;
+  font-weight: 700;
+  border: 2px solid var(--text-primary);
+  box-shadow: 4px 4px 0 0 var(--text-primary);
+}
+
+.successHandle {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent-blue);
+  margin-bottom: 32px;
+}
+
+.disconnectButton {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 2px solid var(--text-primary);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  box-shadow: 3px 3px 0 0 var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.disconnectButton:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 0 var(--text-primary);
+  background-color: #fee2e2;
+}
+
+.errorMessage {
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  background-color: #fee2e2;
+  border: 2px solid #ef4444;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 0;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 40px 16px;
+  }
+  
+  .connectCard,
+  .successCard {
+    padding: 32px 24px;
+  }
+}
+

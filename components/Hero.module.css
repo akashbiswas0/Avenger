@@ -51,6 +51,9 @@
   padding: 16px 32px;
   font-size: 18px;
   min-width: 200px;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
 }
 
 .buttonPrimary {
