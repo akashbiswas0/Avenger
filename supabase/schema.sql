@@ -1,11 +1,12 @@
 -- Create users table to store X account connections
 CREATE TABLE IF NOT EXISTS x_accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
   x_user_id TEXT UNIQUE NOT NULL,
   screen_name TEXT NOT NULL,
   encrypted_access_token TEXT NOT NULL,
-  encrypted_access_token_secret TEXT NOT NULL,
+  refresh_token TEXT,
+  expires_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -18,26 +19,12 @@ CREATE INDEX IF NOT EXISTS idx_x_accounts_screen_name ON x_accounts(screen_name)
 -- Enable Row Level Security (RLS)
 ALTER TABLE x_accounts ENABLE ROW LEVEL SECURITY;
 
--- Policy: Users can only see their own X accounts
-CREATE POLICY "Users can view their own X accounts"
-  ON x_accounts FOR SELECT
-  USING (auth.uid() = user_id);
-
--- Policy: Users can insert their own X accounts
-CREATE POLICY "Users can insert their own X accounts"
-  ON x_accounts FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
--- Policy: Users can update their own X accounts
-CREATE POLICY "Users can update their own X accounts"
-  ON x_accounts FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
--- Policy: Users can delete their own X accounts
-CREATE POLICY "Users can delete their own X accounts"
-  ON x_accounts FOR DELETE
-  USING (auth.uid() = user_id);
+-- Policy: Allow all operations for now (can be restricted later with proper auth)
+-- In production, you'll want to implement proper user authentication
+CREATE POLICY "Allow all operations for x_accounts"
+  ON x_accounts FOR ALL
+  USING (true)
+  WITH CHECK (true);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
